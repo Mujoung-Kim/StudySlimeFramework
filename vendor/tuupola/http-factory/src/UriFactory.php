@@ -1,16 +1,34 @@
 <?php
 
+declare(strict_types=1);
+
 /*
- * This file is part of HTTP factory package
- *
- * Copyright (c) 2017 Mika Tuupola
- *
- * Licensed under the MIT license:
- *   http://www.opensource.org/licenses/mit-license.php
- *
- * Project home:
- *   https://github.com/tuupola/http-factory
- *
+
+Copyright (c) 2017-2019 Mika Tuupola
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+/**
+ * @see       https://github.com/tuupola/http-factory
+ * @license   http://www.opensource.org/licenses/mit-license.php
  */
 
 namespace Tuupola\Http\Factory;
@@ -18,16 +36,18 @@ namespace Tuupola\Http\Factory;
 use GuzzleHttp\Psr7\Uri as GuzzleUri;
 use Nyholm\Psr7\Uri as NyholmUri;
 use Slim\Http\Uri as SlimUri;
+use Slim\Psr7\Factory\UriFactory as SlimPsr7UriFactory;
 use Zend\Diactoros\Uri as DiactorosUri;
 
-use Interop\Http\Factory\UriFactoryInterface;
+use Psr\Http\Message\UriFactoryInterface;
+use Psr\Http\Message\UriInterface;
 
 final class UriFactory implements UriFactoryInterface
 {
     /**
      * {@inheritdoc}
      */
-    public function createUri($uri = "")
+    public function createUri(string $uri = ""): UriInterface
     {
         if (class_exists(DiactorosUri::class)) {
             return new DiactorosUri($uri);
@@ -35,6 +55,10 @@ final class UriFactory implements UriFactoryInterface
 
         if (class_exists(NyholmUri::class)) {
             return new NyholmUri($uri);
+        }
+
+        if (class_exists(SlimPsr7UriFactory::class)) {
+            return (new SlimPsr7UriFactory)->createUri($uri);
         }
 
         if (class_exists(SlimUri::class)) {

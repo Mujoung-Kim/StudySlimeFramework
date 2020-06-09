@@ -4,11 +4,6 @@ declare(strict_types = 1);
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-// use Psr\Http\Message\StreamInterface as Stream;
-// use Psr\Http\Message\ServerRequestInterface;
-use Psr\Log\LoggerInterface;
-use Slim\Factory\AppFactory;
-// use Slim\Psr7\Response as Response;
 
 require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/../includes/DbOperations.php';
@@ -19,8 +14,6 @@ $app = new \Slim\App([
         'displayErrorDetails'=>true
     ]
 ]);
-// $app->addRoutingMiddleware();
-// $errorMiddleware = $app->addErrorMiddleware(true, true, true, $logger);
 
 // $app->get('/hello/{name}', function (Request $request, Response $response, array $args) {
 //     $name = $args['name'];
@@ -45,6 +38,13 @@ $app->post('/createuser', function(Request $request, Response $response){
 
     if(!haveEmptyParameters(array('email', 'password', 'name', 'school'), $request, $response)){
     	$request_data = $request->getParsedBody(); 
+
+        $request_data = [
+            'email' => 'asdf',
+            'password' => 'zxcv',
+            'name' => 'qwer',
+            'school' => 'siwon',
+        ];
 
         $email = $request_data['email']; 
         $password = $request_data['password'];
@@ -100,28 +100,98 @@ $app->post('/createuser', function(Request $request, Response $response){
 		
 });
 
-function haveEmptyParameters($required_params, $request, $response) {
+$app->post('/userlogin', function(Request $request, Response $response) {
+    if(!haveEmptyParameters(array('email', 'password'), $request, $response)) {
+        $request_data = $request->getParsedBody();
+
+        $request_data = [
+            'email' => 'asdf',
+            'password' => 'zxcv',
+            // 'name' => 'qwer',
+            // 'school' => 'siwon',
+        ];
+
+        $email = $request_data['email'];
+        $password = $request_data['password'];
+
+        $db = new DbOperations;
+
+        $result = $db->userLogin($email, $password);
+
+        if($result == USER_AUTHENTICATED) {
+            $user = $db->getUserByEmail($email);
+            $response_data = array();
+
+            $response_data['error'] = false;
+            $response_data['message'] = 'Login Successfull';
+            $response_data['user'] = $user;
+
+            $response->write(json_encode($response_data));
+
+            return $response
+                    ->withHeader('Content-type', 'application/json')
+                    ->withStatus(200);
+
+        } else if($result == USER_NOT_FOUND) {
+            $response_data = array();
+
+            $response_data['error'] = true;
+            $response_data['message'] = 'User not exist';
+
+            $response->write(json_encode($response_data));
+
+            return $response
+                    ->withHeader('Content-type', 'application/json')
+                    ->withStatus(200);
+
+        } else if($result == USER_PASSWORD_DO_NOT_MATCH) {
+            $response_data = array();
+
+            $response_data['error'] = true;
+            $response_data['message'] = 'Invalid credential';
+
+            $response->write(json_encode($response_data));
+
+            return $response
+                    ->withHeader('Content-type', 'application/json')
+                    ->withStatus(200);
+            
+        }
+    }
+    return $response
+        ->withHeader('Content-type', 'application/json')
+        ->withStatus(422);
+
+});
+
+function haveEmptyParameters($required_params, $request, $response){
     $error = false; 
     $error_params = '';
     $request_params = $request->getParsedBody(); 
 
+
+    $request_params = [
+        'email' => 'asdf',
+        'password' => 'zxcv',
+        'name' => 'qwer',
+        'school' => 'siwon',
+    ];
+
+
     foreach($required_params as $param){
-        if(!isset($request_params[$param]) || strlen($request_params[$param])<=0) {
+        if(!isset($request_params[$param]) || strlen($request_params[$param])<=0){
             $error = true; 
-			$error_params .= $param . ', ';
-			
+            $error_params .= $param . ', ';
         }
     }
 
-    if($error) {
+    if($error){
         $error_detail = array();
         $error_detail['error'] = true; 
         $error_detail['message'] = 'Required parameters ' . substr($error_params, 0, -2) . ' are missing or empty';
-		$response->write(json_encode($error_detail));
-		
-	}	
-	return $error; 
-	
+        $response->write(json_encode($error_detail));
+    }
+    return $error; 
 }
 
 $app->run();
