@@ -6,17 +6,13 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * Handles a server request and produces a response.
- *
- * An HTTP request handler process an HTTP request in order to produce an
- * HTTP response.
+ * An HTTP request handler process a HTTP request and produces an HTTP response.
+ * This interface defines the methods require to use the request handler.
  */
 interface RequestHandlerInterface
 {
     /**
-     * Handles a request and produces a response.
-     *
-     * May call other collaborating code to generate the response.
+     * Handle the request and return a response.
      */
     public function handle(ServerRequestInterface $request): ResponseInterface;
 }
