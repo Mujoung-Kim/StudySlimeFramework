@@ -53,6 +53,26 @@
 
         }
 
+        public function getAllUsers() {
+            $stmt = $this->con->prepare("SELECT id, email, name, school FROM users;");
+            $stmt->bind_param('s', $email);
+            $stmt->execute();
+            $stmt->bind_result($id, $email, $name, $school);
+            $users = array();
+
+            while($stmt->fetch()) {
+                $user = array();
+                $user['id'] = $id;
+                $user['email'] = $email;
+                $user['name'] = $name;
+                $user['school'] = $school;
+                array_push($users, $user);
+
+            }
+            return $user;
+
+        }
+
         public function getUserByEmail($email) {
             $stmt = $this->con->prepare("SELECT id, email, name, school FROM users WHERE email = ?");
             $stmt->bind_param('s', $email);
@@ -62,10 +82,48 @@
             $user = array();
             $user['id'] = $id;
             $user['email'] = $email;
-            $user['password'] = $name;
+            $user['name'] = $name;
             $user['school'] = $school;
 
             return $user;
+
+        }
+
+        public function updateUser($email, $name, $school, $id) {
+            $stmt = $this->con->prepare("UPDATE users SET email = ?, name = ?, school =? WHERE id = ?");
+            $stmt->bind_param("sssi", $email, $name, $school, $id);
+
+            if($stmt->execute())
+                return true;
+            return false;
+
+        }
+
+        public function updatePassword($currentpassword, $newpassword, $email) {
+            $hashed_password = $this->getUserPasswordByEmail($email);
+
+            if(password_verify($currentpassword, $hashed_password)) {
+                $hashed_password = password_hash($newpassword, PASSWORD_DEFAULT);
+                $stmt = $this->con->prepare("UPDATE users SET password = ? WHERE email = ?");
+                $stmt->bind_param("ss", $hashed_password, $email);
+
+                if($stmt->execute())
+                    return PASSWORD_CHANGED;
+                return PASSWORD_NOT_CHANGED;
+
+            } else {
+                return PASSWORD_DO_NOT_MATCH;
+
+            }
+        }
+
+        public function deleteUser($id) {
+            $stmt = $this->con->prepare("DELETE FROM users WHERE id = ?");
+            $stmt->bind_param("i", $id);
+
+            if($stmt->execute())
+                return true;
+            return false;
 
         }
 
